@@ -1,7 +1,7 @@
 // Sebastian Heredia
 // dheredia@g.hmc.edu
 // September 28, 2025
-// main.c contains starter code to play Fur Elise (FA24)
+// main.c contains starter code to play Fur Elise and Blue.
 
 #include "RCC.h"
 #include "TIM.h"
@@ -10,6 +10,7 @@
 #include "blue.h"
 
 int main(void) {
+    // configureFlash();
     configureClock();	
     
     // Number of notes in Blue
@@ -35,4 +36,6 @@ int main(void) {
         delay_millis(blue_notes[i][1]);
         i++;
     }
+
+    pwmControl(0);
 }
