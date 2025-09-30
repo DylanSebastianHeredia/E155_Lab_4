@@ -39,7 +39,7 @@ void setPWM_Freq(TIM_TypeDef * TIMx, uint32_t freqDes){
     // Frequency is determined by value in TIMx_ARR register
     // Duty Cycle is determined by value in TIMx_CCR1,2 register 
 
-    TIMx->TIM_ARR = freq - 1;
+    TIMx->TIM_ARR = freq - 1;             // Frequency
     TIMx->TIM_CCR2 = freq/2;              // 50% Duty Cycle
     TIMx->TIM_EGR |= (0b1 << 0 );         // Set UG bit to initialize/update registers
 }
@@ -52,7 +52,7 @@ void TIM_delay_millis(TIM_TypeDef * TIMx, uint32_t ms){
 
     if ((TIMx->TIM_CR1 & 1) != 1) initTIM(TIMx);
 
-    TIMx->TIM_ARR = 100;
+    TIMx->TIM_ARR = ms;
     TIMx->TIM_EGR |= 1;                   // Update registers
     TIMx->TIM_SR &= ~(0b1);               // Clear the update flag
     TIMx->TIM_CNT = 0;                        
@@ -60,6 +60,7 @@ void TIM_delay_millis(TIM_TypeDef * TIMx, uint32_t ms){
     while (!(TIMx->TIM_SR & 1));          // Actual delay
 }
 
+// Wrapper for convenience
 void delay_millis(uint32_t ms){
     TIM_delay_millis(TIM15, ms);
 }
