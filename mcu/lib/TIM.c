@@ -15,7 +15,7 @@ void initTIM(TIM_TypeDef * TIMx) {
 void initTIM_PWM(TIM_TypeDef * TIMx) {
     RCC->APB1ENR1 |= (1 << 0);            // Set up clock to timer
     RCC->AHB2ENR |= (1 << 1);             // Set up clock to GPIOB
-    TIMx->TIM_PSC |= 399;                 // Presscale: Divides by n + 1. 40 MHz/400 = 100 kHz
+    TIMx->TIM_PSC |= 399;                 // Prescale: Divides by n + 1. 40 MHz/400 = 100 kHz
     TIMx->TIM_CCMR1 |= (0b110 << 12);     // Set output channel 2 to PWM mode 1
     TIMx->TIM_CCMR1 |= (0b1 << 11);       // Enable output compare 2 preload
     TIMx->TIM_CR1 |= (0b1 << 7);          // Set auto-reload preload
@@ -23,7 +23,7 @@ void initTIM_PWM(TIM_TypeDef * TIMx) {
     TIMx->TIM_CR1 |= (0b1 << 0);          // Enable counter
     TIMx->TIM_CCER |= (0b1 << 4);         // Enable capture/compare output pin
     
-    pinMode(3, GPIO_ALT);                 // Enable GPIO B3 pin to altmode
+    pinMode(3, GPIO_ALT);                 // Enable GPIO PB3 pin to alternative mode
     GPIO->AFRL |= (0b0001 << 12);
 }
 
@@ -52,7 +52,7 @@ void TIM_delay_millis(TIM_TypeDef * TIMx, uint32_t ms){
 
     if ((TIMx->TIM_CR1 & 1) != 1) initTIM(TIMx);
 
-    TIMx->TIM_ARR = ms;
+    TIMx->TIM_ARR = 100;
     TIMx->TIM_EGR |= 1;                   // Update registers
     TIMx->TIM_SR &= ~(0b1);               // Clear the update flag
     TIMx->TIM_CNT = 0;                        
