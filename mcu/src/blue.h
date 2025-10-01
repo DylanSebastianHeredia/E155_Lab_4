@@ -8,6 +8,7 @@
 
 #define quarter 250   
 #define eigth   125
+
 // Pitch in Hz, duration in ms
 const int blue_notes[][2] = {
 {466, 125},

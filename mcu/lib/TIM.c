@@ -5,66 +5,68 @@
 
 #include "TIM.h"
 
-void initTIM(TIM_TypeDef * TIMx) {
-    RCC->APB2ENR |= (1 << 16);        // Setup Clocks
-    TIMx->PSC |= (40000-1);           // Prescaler: Divides by n + 1. 40 MHz/40000 = 1 kHz
-    TIMx->EGR |= (0b1 << 0 );         // Set Update Generation (UG in EGR) bit to initialize/update registers (EGR - Event Generation Register)
-    TIMx->CR1 |= 0b1;                 // Enable counter
+// Use TIM16 for outputting audio
+// Calculate PWM: Period (ARR) and Pulse Width (CCR1)
+
+// int freq is the desired output PWM frequency (Hz)
+// int dutyCycle is the desired PWM Duty Cycle (%)
+
+void initPWM(TIM_TypeDef *TIMx, uint32_t clk, int freq, int dutyCycle) {
+    if (freq <= 0) return;
+    uint32_t T = clk / (uint32_t)freq;     
+    // if (T < 2) T = 2;                   // Avoid divide by zero
+    // TIMx->PSC = 0;
+    // TIMx->ARR = T - 1;
+
+    // Duty Cycle Calculations
+    uint32_t CCR = (T * (uint32_t)dutyCycle) / 100;  
+    if (CCR >= T) CCR= T - 1;     
+    TIMx->CCR1 = CCR;             
+
+    TIMx->CCMR1 &= ~(0x7 << 4);   // PWM mode 1 (OC1M=110), enable preload
+    TIMx->CCMR1 |=  (0x6 << 4);   // PWM mode 1
+    TIMx->CCMR1 |=  (1 << 3);     // OC1PE = 1
+
+    TIMx->CCER &= ~(1 << 1);      // Enable channel 1 output
+    TIMx->CCER |=  (1 << 0);
+
+    TIMx->CR1 |= (1 << 7);        // Enable ARR preload
+    TIMx->BDTR |= (1 << 15);      // Main output enable (BDTR.MOE) (required for TIM15 and TIM16)
+    TIMx->EGR |= 1;               // Generate update to latch preload
+    TIMx->CR1 |= 1;               // Start counter
 }
 
-void initTIM_PWM(TIM_TypeDef * TIMx) {
-    RCC->APB1ENR1 |= (1 << 0);        // Set up clocks & enable clock to timer
-    RCC->AHB2ENR |= (1 << 1);         // Enable clock to GPIOB
-    TIMx->PSC |= 399;                 // Prescaler: Divides by n + 1. 40 MHz/400 = 100 kHz
-    TIMx->CCMR1 |= (0b110 << 12);     // Set output CH2 to PWM Mode 1
-    TIMx->CCMR1 |= (0b1 << 11);       // Enable output compare to the preload
-  
-    TIMx->CR1 |= (0b1 << 7);           // Set auto-reload preload
-    TIMx->EGR |= (0b1 << 0 );          // Set UG bit to initialize/update registers
-    TIMx->CR1 |= (0b1 << 0);           // Enable counter
-    TIMx->CCER |= (0b1 << 4);          // Enable compare output pin
-    
-    pinMode(3, GPIO_ALT);              // Enable GPIO PB3 to ATLMODE
-    GPIO->AFRL |= (0b0001 << 12);
+// Set PWM freq and duty cycle (for next note)
+void setPWM(TIM_TypeDef *TIMx, uint32_t clk, int freq, int dutyCycle) {
+    if (freq <= 0) return;      
+
+    uint32_t T = clk / (uint32_t)freq;  // Compute T (One full period) by ARR+1 = clk/freq
+    if (T < 2) T = 2;
+
+    uint32_t ccr = (T * (uint32_t)dutyCycle) / 100;     // Capture Compare Register 1 (CCR1) is LOW until end of period T
+    if (ccr >= T) ccr = T - 1;          // Ensuring Duty Cycle less than 100%
+
+    TIMx->ARR  = T - 1;     // Starts from 0, so T-0 accounts for total ticks
+    TIMx->CCR1 = ccr;
+    TIMx->EGR |= 1;         // Enable UG bit to force immediating lead
 }
 
-void set_TIM_PWM_freq(TIM_TypeDef * TIMx, uint32_t freqDes){
-    uint32_t freq;
-    if (freqDes == 0){
-        freq = 0x8FFFFFFF;
-    } else {
-        freq = (100000/freqDes);       // (100 kHz / Desired frequency) = Counter
-    }
+// Use TIM15 to generate microsecond timer
+void delay_micros(uint32_t us) {
 
-    if ((TIMx->CR1 & 1) != 1){
-        initTIM_PWM(TIMx);
-    }
+    TIM15->CNT = 0;             // Reset counter
 
-    // PWM allows for generation of a signal w/ frequency determined by 
-    // value on TIMx_ARR reg and duty cycle on the TIMx_CCRx register.
-    
-    TIMx->ARR = freq - 1;
-    TIMx->CCR2 = freq/2;              // Div. by 2 = 50% Duty Cycle
-    TIMx->EGR |= (0b1 << 0 );         // Set UG bit to initialize/update registers
-}
+    // Aim for 1MHz timer frequency for improved precision
+    // 1MHz is a period of 1 microsecond
 
-// TIM2 sets PWM
-void PWM(uint32_t freqDes){
-    set_TIM_PWM_freq(TIM2, freqDes);
-}
+    TIM15->PSC = 79;            // Set prescaler (PSC)
+    // Set such that 1,000,000 Hz = 80,000,000 Hz / (PSC + 1), PSC = 79
 
-void TIM_delay_millis(TIM_TypeDef * TIMx, uint32_t ms){
-    if ((TIMx->CR1 & 1) != 1){
-        initTIM(TIMx);
-    }
-    TIMx->ARR = ms;
-    TIMx->EGR |= 1;            
-    TIMx->SR &= ~(0b1);      
-    TIMx->CNT = 0;
-    while (!(TIMx->SR & 1));    
-}
+    TIM15->ARR = us;            // ARR is in microseconds
+    TIM15->SR &= ~1;            // Empty the Status Register (SR) to remove previous operations
+    TIM15->CR1 |= 1;            // Set counter
 
-// TIM15 sets delay
-void delay_millis(uint32_t ms){
-    TIM_delay_millis(TIM15, ms);
+    while (!(TIM15->SR & 1));   // Wait until UIF is set before clearing flag and stopping counter
+    TIM15->SR &= ~1;
+    TIM15->CR1 &= ~1;
 }

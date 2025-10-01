@@ -57,6 +57,6 @@ typedef struct
 
 void initPWM(TIM_TypeDef * TIMx, uint32_t clk, int freq, int dutyCycle);
 void setPWM(TIM_TypeDef * TIMx, uint32_t clk, int freq, int dutyCycle);
-void delay_millis(uint32_t ms);
+void delay_micros(uint32_t us);
 
 #endif
