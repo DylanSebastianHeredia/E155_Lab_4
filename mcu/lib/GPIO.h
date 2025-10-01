@@ -43,12 +43,10 @@ typedef struct {
     volatile uint32_t LCKR;    // GPIO Offset 0x1C
     volatile uint32_t AFRL;    // GPIO Offset 0x20
     volatile uint32_t AFRH;    // GPIO Offset 0x24
-} GPIO;
+} GPIO_TypeDef;
 
 // Pointers to GPIO-sized chunks of memory for each peripheral
-#define GPIOA ((GPIO *) GPIOA_BASE)
-
-#define GPIO GPIOA
+#define GPIO ((GPIO_TypeDef *) GPIOA_BASE)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
