@@ -1,7 +1,7 @@
 // Sebastian Heredia
 // dheredia@g.hmc.edu
-// September 29, 2025
-// RCC.h countains header file code for RCC functions.
+// September 28, 2025
+// RCC.h contains header file code for RCC functions.
 
 #ifndef RCC_H
 #define RCC_H
