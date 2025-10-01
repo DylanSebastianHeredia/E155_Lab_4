@@ -72,13 +72,13 @@ int main(void) {
 
         if (freq_blue == 0) {
             TIM16->CCER &= ~(1 << 0);
-            delay_micros(length_blue);
+            delay_micros(1.5 * length_blue);        // Slowed down to match actual song speed
             TIM16->CCER |= (1 << 0);
         } 
         
         else {
             setPWM(TIM16, sysClk, freq_blue, 50);
-            delay_micros(length_blue); 
+            delay_micros(1.5 * length_blue); 
         }
         i++;
    
