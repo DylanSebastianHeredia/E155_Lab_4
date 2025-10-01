@@ -4,6 +4,7 @@
 // GPIO.c contains code to implement GPIO functions.
 
 #include "GPIO.h"
+
 void pinMode(int pin, int function) {
     switch(function) {
         case GPIO_INPUT:
@@ -28,13 +29,10 @@ int digitalRead(int pin) {
 }
 
 void digitalWrite(int pin, int val) {
-    GPIO->ODR |= (val << pin);
+    GPIO->ODR |= (1 << pin);
 }
 
 void togglePin(int pin) {
-    // Use XOR to toggle
-    GPIO->ODR ^= (1 << pin);
-}
     // Use XOR to toggle
     GPIO->ODR ^= (1 << pin);
 }

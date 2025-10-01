@@ -8,7 +8,6 @@
 
 #include <stdint.h>
 #include "GPIO.h"
-#include "RCC.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Definitions
@@ -17,8 +16,8 @@
 #define __IO volatile
 
 // Defining timer base addresses
-#define TIM2_BASE (0x40000000UL)   // Base address for TIM2
 #define TIM15_BASE (0x40014000UL)  // Base address for TIM15
+#define TIM16_BASE (0x40014400UL)  // Base address for TIM16
 
 typedef struct
 {
@@ -49,15 +48,15 @@ typedef struct
   __IO uint32_t OR2;         /*!< TIM option register 2,                            Address offset: 0x60 */
 } TIM_TypeDef;
 
-#define TIM2 ((TIM_TypeDef *) TIM2_BASE)
 #define TIM15 ((TIM_TypeDef *) TIM15_BASE)
+#define TIM16 ((TIM_TypeDef *) TIM16_BASE)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function prototypes
 ///////////////////////////////////////////////////////////////////////////////
 
-void initTIM(TIM_TypeDef * TIMx);
-void PWM(uint32_t freqDes);
+void initPWM(TIM_TypeDef * TIMx, uint32_t clk, int freq, int dutyCycle);
+void setPWM(TIM_TypeDef * TIMx, uint32_t clk, int freq, int dutyCycle);
 void delay_millis(uint32_t ms);
 
 #endif
