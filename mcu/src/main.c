@@ -25,34 +25,35 @@ int main(void) {
     configureClock();
 
     // Initialize GPIOA and timers
-    RCC->AHB2ENR |= (1 << 0);    
+    RCC->AHB2ENR |= (1 << 0);   // GPIO for A 
 
     RCC->APB2ENR |= (1 << 16);  // TIM15
     RCC->APB2ENR |= (1 << 17);  // TIM16
 
-    // Configure PA6 for TIM16 on Channel 1
+    // Configure PA6 for TIM16 on channel 1
     pinMode(6, GPIO_ALT);       // PA6
-    GPIOA->AFRL &= ~(0xF << (6 * 4));
-    GPIOA->AFRL |=  (14 << (6 * 4));
+    GPIO->AFRL &= ~(0xF << (6 * 4));
+    GPIO->AFRL |= (14 << (6 * 4));
 
     // initPWM
-    const uint32_t CLK = 80000000;  // 80MHz
-    // initPWM(TIM16, CLK, 440, 50);   // Example initialization if needed
+    const uint32_t sysClk = 80000000/80;     // 80MHz system clk / 80 = Timer clk
+    initPWM(TIM16, sysClk, 440, 50);         // Tuning A4 (440Hz)
 
     // Fur Elise
     int i = 0;
     while (fur_elise_notes[i][1] != 0) {
-        int freq = fur_elise_notes[i][0];
-        int length  = fur_elise_notes[i][1];
+        int freq_fur = fur_elise_notes[i][0];
+        int length_fur = fur_elise_notes[i][1];
 
-        if (freq == 0) {
-            // Rest: disable channel output
+        if (freq_fur == 0) {
             TIM16->CCER &= ~(1 << 0);
-            delay_micros(length * 1000);   // Convert ms → us
+            delay_micros(length_fur);
             TIM16->CCER |= (1 << 0);
-        } else {
-            setPWM(TIM16, CLK, freq, 50);
-            delay_micros(length * 1000);   // Convert ms → us
+        } 
+        
+        else {
+            setPWM(TIM16, sysClk, freq_fur, 50);
+            delay_micros(length_fur);  
         }
         i++;
     }
@@ -61,23 +62,28 @@ int main(void) {
     TIM16->CR1 &= ~1;                 // Stop PWM
     delay_micros(1000000);            // 1 second delay
 
+    initPWM(TIM16, sysClk, 440, 50);   
+
     // Blue (Da Be Dee)
     i = 0;
     while (blue_notes[i][1] != 0) {
-        int freq = blue_notes[i][0];
-        int length  = blue_notes[i][1];
+        int freq_blue = blue_notes[i][0];
+        int length_blue = blue_notes[i][1];
 
-        if (freq == 0) {
+        if (freq_blue == 0) {
             TIM16->CCER &= ~(1 << 0);
-            delay_micros(length * 1000);   // Convert ms → us
+            delay_micros(length_blue);
             TIM16->CCER |= (1 << 0);
-        } else {
-            setPWM(TIM16, CLK, freq, 50);
-            delay_micros(length * 1000);   // Convert ms → us
+        } 
+        
+        else {
+            setPWM(TIM16, sysClk, freq_blue, 50);
+            delay_micros(length_blue); 
         }
         i++;
+   
     }
-
+ 
     // Turn PWM off at the very end to end the music
     TIM16->CR1 &= ~1;
     while (1);
